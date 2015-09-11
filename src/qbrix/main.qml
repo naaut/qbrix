@@ -42,23 +42,22 @@ ApplicationWindow {
         }
     }
 
-    Component.onCompleted: {
-        componentsFolderModel.selection = elementSetTable.selection;
-        testDataFolderModel.selection = dataSetTable.selection;
-    }
 
     // Load List of Avalible DataSet
     function loadDataSets() {
-        elementSetTable.model.selection.forEach(function (rowIndex) {
-            testDataFolderModel.folder = openDialog.fileUrl+ "/" + elementSetTable.model.get(rowIndex, "fileName") + "/TestData";
+        componentsFolderModel.selection = componentsSetTable.selection;
+        testDataFolderModel.selection = testDataTable.selection;
+        componentsSetTable.model.selection.forEach(function (rowIndex) {
+            var name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
+            testDataFolderModel.folder = openDialog.fileUrl+ "/" + name + "/TestData";
         })
     }
 
     // Load selected component
     function loadComponent() {
-        elementSetTable.model.selection.forEach(function (rowIndex) {
-           var name = elementSetTable.model.get(rowIndex, "fileName");
-           componentLoader.source = openDialog.fileUrl + "/" + name;
+        componentsSetTable.model.selection.forEach(function (rowIndex) {
+           var name = componentsSetTable.model.get(rowIndex, "fileName");
+            componentLoader.source = openDialog.fileUrl + "/" + name;
         })
     }
 
@@ -72,7 +71,7 @@ ApplicationWindow {
             width: 200
 
             TableView {
-                id: elementSetTable
+                id: componentsSetTable
 
                 height: main.height/2
                 anchors.right: parent.right
@@ -103,9 +102,9 @@ ApplicationWindow {
             }
 
             TableView {
-                id: dataSetTable
+                id: testDataTable
 
-                width: elementSetTable.width
+                width: componentsSetTable.width
                 height: main.height/2
 
                 TableViewColumn {
