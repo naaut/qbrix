@@ -13,6 +13,7 @@ ApplicationWindow {
     height: 600
 
     menuBar: MenuBar {
+
         Menu {
             title: "File"
 
@@ -49,7 +50,7 @@ ApplicationWindow {
         testDataFolderModel.selection = testDataTable.selection;
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             var name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
-            testDataFolderModel.folder = openDialog.fileUrl+ "/" + name + "/TestData";
+            testDataFolderModel.folder = openDialog.fileUrl+ "/TestData/" + name;
         })
     }
 
@@ -95,7 +96,7 @@ ApplicationWindow {
                 onClicked: {
                     // Load List of Avalible DataSet
                     loadDataSets();
-                    loadComponent() ;
+                    loadComponent();
                 }
 
                 model: componentsFolderModel
