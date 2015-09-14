@@ -2,7 +2,7 @@ import QtQuick 2.5
 import QtQuick.Window 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs 1.2
-
+import CustomClasses 1.0
 import Qt.labs.folderlistmodel 2.1
 
 ApplicationWindow {
@@ -11,6 +11,11 @@ ApplicationWindow {
 
     width: 900
     height: 600
+
+    FileIO{
+        id: fileio
+    }
+
 
     menuBar: MenuBar {
 
@@ -47,20 +52,37 @@ ApplicationWindow {
     // Load List of Avalible DataSet
     function loadDataSets() {
         componentsFolderModel.selection = componentsSetTable.selection;
-        testDataFolderModel.selection = testDataTable.selection;
+        testDataTable.selection.clear();
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             var name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
             testDataFolderModel.folder = openDialog.fileUrl+ "/TestData/" + name;
-        })
+        });
     }
 
     // Load selected component
-    function loadComponent() {
+    function loadComponent(testData) {
         componentsSetTable.model.selection.forEach(function (rowIndex) {
-           var name = componentsSetTable.model.get(rowIndex, "fileName");
-            componentLoader.source = openDialog.fileUrl + "/" + name;
-        })
+            var name = componentsSetTable.model.get(rowIndex, "fileName");
+            if (testData) componentLoader.setSource(openDialog.fileUrl + "/" + name, testData);
+            else  componentLoader.setSource(openDialog.fileUrl + "/" + name, {});
+        });
     }
+
+    //apply data Sets
+    function applyData() {
+        var name;
+        testDataFolderModel.selection = testDataTable.selection;
+        componentsSetTable.model.selection.forEach(function (rowIndex) {
+            name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
+        });
+        testDataTable.model.selection.forEach(function (rowIndex){
+            var fileName = openDialog.fileUrl + "/TestData/" + name + "/" + testDataTable.model.get(rowIndex, "fileName")
+            var TestData = JSON.parse(fileio.load(fileName.replace("file://","")));
+            loadComponent(TestData);
+        });
+
+    }
+
 
     SplitView {
         id: splitView
@@ -97,6 +119,7 @@ ApplicationWindow {
                     // Load List of Avalible DataSet
                     loadDataSets();
                     loadComponent();
+
                 }
 
                 model: componentsFolderModel
@@ -123,11 +146,11 @@ ApplicationWindow {
                 }
 
                 onClicked: {
-                    console.log(">>>>>>>>>>>>>>>> onClicked")
+                    applyData();
                 }
 
                 onDoubleClicked: {
-                    console.log(">>>>>>>>>>>>>>>> onDoubleClicked")
+
                 }
 
                 model: testDataFolderModel
