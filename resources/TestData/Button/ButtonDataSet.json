@@ -1,5 +1,8 @@
 { 
-	"color" : "red",
-	"opacity": 0.5,
-	"text" : "OK"
+	"color" : "#999",
+	"opacity": 0.4,
+	"text" : "Done!"
 }
+
+
+

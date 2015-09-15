@@ -1,7 +1,5 @@
 import QtQuick 2.4
 
-
-Item {
     TextEdit {
         width: 240
         text: "Hello World!"
@@ -10,4 +8,3 @@ Item {
         color: "blue"
         focus: true
     }
-}

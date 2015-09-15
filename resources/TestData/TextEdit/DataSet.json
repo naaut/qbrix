@@ -1,5 +1,6 @@
 {
 	"width" : 100,
 	"text" : "Data Set From JSON",
-	"color" : "red"
+	"color" : "red",
+	"opacity" : 0.5
 }

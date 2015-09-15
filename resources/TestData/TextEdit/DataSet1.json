@@ -1,6 +1,9 @@
 {
-	"width" : 150,
+	"width" : 100,
 	"text" : "Data Set 1 From JSON",
 	"color" : "blue",
-	"font.pointSize" : 50
+	"font.pointSize" : 30,
+	"opacity" : 0.3
 }
+
+

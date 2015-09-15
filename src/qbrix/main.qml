@@ -6,6 +6,13 @@ import CustomClasses 1.0
 import Qt.labs.folderlistmodel 2.1
 
 ApplicationWindow {
+
+    property string folderUrl: "file:///work/qbrix/resources"
+    property string fileUrl: "file:///work/qbrix/resources/Button.qml"
+    property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
+
+    property variant win;
+
     id: main
     visible: true
 
@@ -16,6 +23,9 @@ ApplicationWindow {
         id: fileio
     }
 
+    Component.onCompleted: {
+         componentsFolderModel.folder = folderUrl;
+    }
 
     menuBar: MenuBar {
 
@@ -24,6 +34,7 @@ ApplicationWindow {
 
             MenuItem {
                 text: "Open"
+                shortcut: "Ctrl+O"
                 onTriggered: {
                     openDialog.open();
                 }
@@ -44,10 +55,23 @@ ApplicationWindow {
 
         onAccepted: {
             console.log("You chose: " + openDialog.fileUrl)
-            componentsFolderModel.folder = openDialog.fileUrl;
+            main.folderUrl = openDialog.fileUrl;
         }
     }
 
+    function createNewWindow(fileUrl) {
+        var component = Qt.createComponent("EditWindow.qml");
+        if (component.status == Component.Ready){
+            win = component.createObject(main);
+            win.show();
+            win.folderUrl = main.folderUrl;
+            win.fileUrl = fileUrl;
+        }
+        else if (component.status == Component.Error) {
+                // Error Handling
+                console.log("Error loading component:", component.errorString());
+            }
+    }
 
     // Load List of Avalible DataSet
     function loadDataSets() {
@@ -55,32 +79,32 @@ ApplicationWindow {
         testDataTable.selection.clear();
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             var name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
-            testDataFolderModel.folder = openDialog.fileUrl+ "/TestData/" + name;
+            testDataFolderModel.folder = main.folderUrl + "/TestData/" + name;
         });
     }
 
     // Load selected component
     function loadComponent(testData) {
+        componentLoader.source = "";
         componentsSetTable.model.selection.forEach(function (rowIndex) {
-            var name = componentsSetTable.model.get(rowIndex, "fileName");
-            if (testData) componentLoader.setSource(openDialog.fileUrl + "/" + name, testData);
-            else  componentLoader.setSource(openDialog.fileUrl + "/" + name, {});
+            main.fileUrl = main.folderUrl + "/" + componentsSetTable.model.get(rowIndex, "fileName");
+            if (testData) componentLoader.setSource(main.fileUrl, testData);
+            else  componentLoader.setSource(main.fileUrl, {});
         });
     }
 
     //apply data Sets
     function applyData() {
-        var name;
+        var componentName;
         testDataFolderModel.selection = testDataTable.selection;
         componentsSetTable.model.selection.forEach(function (rowIndex) {
-            name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
+            componentName = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
         });
         testDataTable.model.selection.forEach(function (rowIndex){
-            var fileName = openDialog.fileUrl + "/TestData/" + name + "/" + testDataTable.model.get(rowIndex, "fileName")
-            var TestData = JSON.parse(fileio.load(fileName.replace("file://","")));
+            dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName")
+            var TestData = JSON.parse(fileio.load(dataFileUrl.replace("file://","")));
             loadComponent(TestData);
         });
-
     }
 
 
@@ -115,11 +139,24 @@ ApplicationWindow {
                     showDirs: false
                 }
 
+                onActiveFocusOnTabChanged: {
+
+                }
+
+//                onCurrentRowChanged: {
+//                    // Load List of Avalible DataSet
+//                    loadDataSets();
+//                    loadComponent();
+//                }
+
                 onClicked: {
                     // Load List of Avalible DataSet
                     loadDataSets();
                     loadComponent();
 
+                }
+                onDoubleClicked: {
+                    createNewWindow(fileUrl);
                 }
 
                 model: componentsFolderModel
@@ -150,7 +187,7 @@ ApplicationWindow {
                 }
 
                 onDoubleClicked: {
-
+                    createNewWindow(dataFileUrl);
                 }
 
                 model: testDataFolderModel
@@ -162,11 +199,11 @@ ApplicationWindow {
 
             Loader{
                 id: componentLoader
-
-                anchors.centerIn: parent
+                x: parent.width/2 - componentLoader.width/2
+                y: parent.height/2 - componentLoader.height/2
+                //anchors.centerIn: parent
             }
         }
     }
-
 }
 
