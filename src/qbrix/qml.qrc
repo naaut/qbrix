@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>EditWindow.qml</file>
         <file>CodeEditor.qml</file>
         <file>Helper.js</file>
     </qresource>

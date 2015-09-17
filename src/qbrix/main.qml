@@ -14,7 +14,6 @@ ApplicationWindow {
     property string fileUrl: "file:///work/qbrix/resources/Button.qml"
     property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
 
-    property variant win;
     property variant codeEditor;
 
     id: main
@@ -31,12 +30,10 @@ ApplicationWindow {
          componentsFolderModel.folder = folderUrl;
     }
 
-//    onFolderUrlChanged: {
-//        if (codeEditor) codeEditor.destroy();
-//        cacheManager.clear();
-//        componentsFolderModel.folder = "";
-//        componentsFolderModel.folder = folderUrl;
-//    }
+    onFolderUrlChanged: {
+        if (codeEditor) codeEditor.destroy();
+        componentsFolderModel.folder = folderUrl;
+    }
 
 
 
@@ -55,6 +52,7 @@ ApplicationWindow {
 
             MenuItem {
                 text: "Quit"
+                shortcut: "Crtl+X"
                 onTriggered: Qt.quit()
             }
         }
@@ -67,9 +65,7 @@ ApplicationWindow {
         selectFolder: true
 
         onAccepted: {
-            console.log("You chose: " + openDialog.fileUrl)
             main.folderUrl = openDialog.fileUrl;
-
         }
     }
 

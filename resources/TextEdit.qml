@@ -1,4 +1,3 @@
-
 import QtQuick 2.4
 
     TextEdit {
@@ -9,6 +8,70 @@ import QtQuick 2.4
         color: "red"
         focus: true
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
