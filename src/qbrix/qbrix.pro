@@ -4,7 +4,10 @@ QT += qml quick
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    fileio.cpp
+    fileio.cpp \
+    componentcachemanager.cpp \
+    QMLHighlighter.cpp \
+    SyntaxHighlighter.cpp
 
 RESOURCES += qml.qrc
 
@@ -15,5 +18,8 @@ QML_IMPORT_PATH =
 include(deployment.pri)
 
 HEADERS += \
-    fileio.h
+    fileio.h \
+    componentcachemanager.h \
+    QMLHighlighter.h \
+    SyntaxHighlighter.h
 

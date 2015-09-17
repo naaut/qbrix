@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.4
 import QtQuick.Window 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs 1.2
@@ -7,9 +7,9 @@ import Qt.labs.folderlistmodel 2.1
 
 ApplicationWindow {
 
-    property string folderUrl: "file:///work/qbrix/resources"
+    property string folderUrl: "file://D:/Git/qbrix/resources"
     property string fileUrl: "file:///work/qbrix/resources/Button.qml"
-    property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
+    property string dataFileUrl: "file:///cwork/qbrix/resources/TestData/Button/ButtonDataSet.json"
 
     property variant win;
 
@@ -24,6 +24,7 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        console.log(">>>>> Component.onCompleted folderUrl ", Qt.resolvedUrl(folderUrl));
          componentsFolderModel.folder = folderUrl;
     }
 
@@ -50,12 +51,13 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         title: "Please choose a file"
-        folder: shortcuts.home
+        //folder: shortcuts.home
         selectFolder: true
 
         onAccepted: {
             console.log("You chose: " + openDialog.fileUrl)
             main.folderUrl = openDialog.fileUrl;
+            console.log(">>>>> onAccepted main.folderUrl ", folderUrl);
         }
     }
 
@@ -66,6 +68,16 @@ ApplicationWindow {
             win.show();
             win.folderUrl = main.folderUrl;
             win.fileUrl = fileUrl;
+
+            win.textChanged.connect(function(text){
+                    var source = componentLoader.source;
+                    componentLoader.source = "";
+                    cacheManager.clear();
+                    console.log(">>>>> Trim" )
+                    fileio.save(text, source)
+                    componentLoader.source = source;
+
+            });
         }
         else if (component.status == Component.Error) {
                 // Error Handling
@@ -86,6 +98,7 @@ ApplicationWindow {
     // Load selected component
     function loadComponent(testData) {
         componentLoader.source = "";
+        cacheManager.trim();
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             main.fileUrl = main.folderUrl + "/" + componentsSetTable.model.get(rowIndex, "fileName");
             if (testData) componentLoader.setSource(main.fileUrl, testData);
@@ -102,7 +115,7 @@ ApplicationWindow {
         });
         testDataTable.model.selection.forEach(function (rowIndex){
             dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName")
-            var TestData = JSON.parse(fileio.load(dataFileUrl.replace("file://","")));
+            var TestData = JSON.parse(fileio.load(dataFileUrl));
             loadComponent(TestData);
         });
     }

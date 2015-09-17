@@ -3,4 +3,10 @@
         <file>main.qml</file>
         <file>EditWindow.qml</file>
     </qresource>
+    <qresource prefix="/resources/dictionaries">
+        <file>dictionaries/javascript.txt</file>
+        <file>dictionaries/keywords.txt</file>
+        <file>dictionaries/properties.txt</file>
+        <file>dictionaries/qml.txt</file>
+    </qresource>
 </RCC>
