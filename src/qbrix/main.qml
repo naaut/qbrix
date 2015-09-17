@@ -4,29 +4,41 @@ import QtQuick.Controls 1.2
 import QtQuick.Dialogs 1.2
 import CustomClasses 1.0
 import Qt.labs.folderlistmodel 2.1
+import "Helper.js" as Helper
+
+
 
 ApplicationWindow {
 
-    property string folderUrl: "file://D:/Git/qbrix/resources"
+    property string folderUrl: "file:///work/qbrix/resources"
     property string fileUrl: "file:///work/qbrix/resources/Button.qml"
-    property string dataFileUrl: "file:///cwork/qbrix/resources/TestData/Button/ButtonDataSet.json"
+    property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
 
     property variant win;
+    property variant codeEditor;
 
     id: main
     visible: true
 
-    width: 900
-    height: 600
+    width: 1280
+    height: 768
 
     FileIO{
         id: fileio
     }
 
     Component.onCompleted: {
-        console.log(">>>>> Component.onCompleted folderUrl ", Qt.resolvedUrl(folderUrl));
          componentsFolderModel.folder = folderUrl;
     }
+
+//    onFolderUrlChanged: {
+//        if (codeEditor) codeEditor.destroy();
+//        cacheManager.clear();
+//        componentsFolderModel.folder = "";
+//        componentsFolderModel.folder = folderUrl;
+//    }
+
+
 
     menuBar: MenuBar {
 
@@ -50,39 +62,37 @@ ApplicationWindow {
 
     FileDialog {
         id: openDialog
-        title: "Please choose a file"
-        //folder: shortcuts.home
+        title: "Please choose a folder"
+        folder: shortcuts.home
         selectFolder: true
 
         onAccepted: {
             console.log("You chose: " + openDialog.fileUrl)
             main.folderUrl = openDialog.fileUrl;
-            console.log(">>>>> onAccepted main.folderUrl ", folderUrl);
+
         }
     }
 
-    function createNewWindow(fileUrl) {
-        var component = Qt.createComponent("EditWindow.qml");
+    //creating new CodeEdit and load code
+    function loadCode(fileUrl , isJSON) {
+        var component = Qt.createComponent("CodeEditor.qml");
         if (component.status == Component.Ready){
-            win = component.createObject(main);
-            win.show();
-            win.folderUrl = main.folderUrl;
-            win.fileUrl = fileUrl;
-
-            win.textChanged.connect(function(text){
-                    var source = componentLoader.source;
-                    componentLoader.source = "";
-                    cacheManager.clear();
-                    console.log(">>>>> Trim" )
-                    fileio.save(text, source)
-                    componentLoader.source = source;
-
+            if (codeEditor) codeEditor.destroy();
+            codeEditor = component.createObject(editArea);
+            codeEditor.fileUrl = fileUrl;
+            codeEditor.dataChanged.connect(function (text){
+                var source = componentLoader.source;
+                componentLoader.source = "";
+                cacheManager.clear();
+                fileio.save(text, fileUrl);
+                if (isJSON) componentLoader.setSource(source, Helper.parseJSON(text));
+                else componentLoader.source = source;
             });
         }
         else if (component.status == Component.Error) {
-                // Error Handling
-                console.log("Error loading component:", component.errorString());
-            }
+            // Error Handling
+            console.log("Error loading component:", component.errorString());
+        }
     }
 
     // Load List of Avalible DataSet
@@ -96,18 +106,24 @@ ApplicationWindow {
     }
 
     // Load selected component
-    function loadComponent(testData) {
+    function loadComponent(testData) {        
         componentLoader.source = "";
         cacheManager.trim();
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             main.fileUrl = main.folderUrl + "/" + componentsSetTable.model.get(rowIndex, "fileName");
-            if (testData) componentLoader.setSource(main.fileUrl, testData);
-            else  componentLoader.setSource(main.fileUrl, {});
+            if (testData) {
+                loadCode(dataFileUrl, true);
+                componentLoader.setSource(main.fileUrl, testData);
+            }
+            else  {
+                loadCode(fileUrl);
+                componentLoader.setSource(main.fileUrl, {});
+            }
         });
     }
 
-    //apply data Sets
-    function applyData() {
+    // Apply JSON Data to component
+    function applyData() {        
         var componentName;
         testDataFolderModel.selection = testDataTable.selection;
         componentsSetTable.model.selection.forEach(function (rowIndex) {
@@ -115,8 +131,11 @@ ApplicationWindow {
         });
         testDataTable.model.selection.forEach(function (rowIndex){
             dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName")
-            var TestData = JSON.parse(fileio.load(dataFileUrl));
-            loadComponent(TestData);
+
+            var TestData = Helper.parseJSON(fileio.load(dataFileUrl));
+            if (TestData === {}) loadCode(dataFileUrl);
+            else loadComponent(TestData);
+
         });
     }
 
@@ -124,7 +143,6 @@ ApplicationWindow {
     SplitView {
         id: splitView
         anchors.fill: parent
-
 
         Column {
 
@@ -152,23 +170,12 @@ ApplicationWindow {
                     showDirs: false
                 }
 
-                onActiveFocusOnTabChanged: {
-
-                }
-
-//                onCurrentRowChanged: {
-//                    // Load List of Avalible DataSet
-//                    loadDataSets();
-//                    loadComponent();
-//                }
-
                 onClicked: {
                     // Load List of Avalible DataSet
                     loadDataSets();
                     loadComponent();
-
                 }
-                onDoubleClicked: {
+                onDoubleClicked: {                    
                     createNewWindow(fileUrl);
                 }
 
@@ -199,7 +206,7 @@ ApplicationWindow {
                     applyData();
                 }
 
-                onDoubleClicked: {
+                onDoubleClicked: {                    
                     createNewWindow(dataFileUrl);
                 }
 
@@ -209,13 +216,19 @@ ApplicationWindow {
 
         Rectangle {
             color:"darkgrey"
+            width: 400
 
             Loader{
                 id: componentLoader
                 x: parent.width/2 - componentLoader.width/2
                 y: parent.height/2 - componentLoader.height/2
-                //anchors.centerIn: parent
+               // anchors.centerIn: parent
             }
+        }
+
+        Rectangle {
+            id: editArea
+
         }
     }
 }

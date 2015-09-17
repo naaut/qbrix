@@ -2,11 +2,13 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>EditWindow.qml</file>
+        <file>CodeEditor.qml</file>
+        <file>Helper.js</file>
     </qresource>
-    <qresource prefix="/resources/dictionaries">
-        <file>dictionaries/javascript.txt</file>
-        <file>dictionaries/keywords.txt</file>
-        <file>dictionaries/properties.txt</file>
+    <qresource prefix="/resources">
         <file>dictionaries/qml.txt</file>
+        <file>dictionaries/properties.txt</file>
+        <file>dictionaries/keywords.txt</file>
+        <file>dictionaries/javascript.txt</file>
     </qresource>
 </RCC>

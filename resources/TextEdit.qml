@@ -1,10 +1,60 @@
+
 import QtQuick 2.4
 
     TextEdit {
-        width: 240
-        text: "Hello World!"
+        width: 100
+        text: "He1llo World1!"
         font.family: "Helvetica"
-        font.pointSize: 20
-        color: "blue"
+        font.pointSize: 50
+        color: "red"
         focus: true
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
