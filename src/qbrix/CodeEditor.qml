@@ -13,18 +13,19 @@ ScrollView {
 
 
     onFileUrlChanged: {
-        edit.text = dataFileIO.load(fileUrl);
+       edit.prevText = dataFileIO.load(fileUrl);
+       edit.text = edit.prevText;
     }
 
     MouseArea {
-
         anchors.fill: parent
         cursorShape: Qt.IBeamCursor
-
     }
 
     TextEdit {
         id: edit
+
+        property string prevText: ""
 
         color: palette.editorNormal
         selectionColor: palette.editorSelection
@@ -41,8 +42,11 @@ ScrollView {
         }
 
         onTextChanged: {
-            timer.stop()
-            timer.start()
+            if(edit.prevText !== edit.text) {
+                edit.prevText = edit.text
+                timer.stop()
+                timer.start()
+            }
         }
 
         Component.onCompleted: {

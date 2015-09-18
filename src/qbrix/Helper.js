@@ -1,5 +1,5 @@
 
-function parseJSON(data) {
+function tryParseJSON(data) {
     var response;
     try
     {
@@ -11,3 +11,9 @@ function parseJSON(data) {
     }
     return response;
 }
+
+function tryLoader(loader, source, data) {
+    loader.setSource(source, data);
+    if (loader.status === 3) loader.setSource("ErrorMessage.qml",{text: "QML file load error!" });
+}
+

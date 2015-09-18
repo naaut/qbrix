@@ -5,9 +5,17 @@ import QtQuick 2.4
         text: "He1llo World1!"
         font.family: "Helvetica"
         font.pointSize: 50
-        color: "red"
+        color: "blue"
         focus: true
     }
+
+
+
+
+
+
+
+
 
 
 

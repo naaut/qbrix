@@ -1,23 +1,22 @@
-import QtQuick 2.0
+import QtQuick 2.4
 import QtQuick.Window 2.2
 import QtQuick.Controls 1.2
+import QtQuick.Dialogs 1.2
 import CustomClasses 1.0
+import Qt.labs.folderlistmodel 2.1
+import "Helper.js" as Helper
+
+
 
 ApplicationWindow {
-
     id: editWindow
+    visible: true
 
-    property string fileUrl: ""
-    property string folderUrl: ""
+    property string folderUrl: "file:///work/qbrix/resources"
+    property string fileUrl: "file:///work/qbrix/resources/Button.qml"
 
-    //signal textChanged(var text);
-
-    width: 900
-    height: 600
-
-    FileIO{
-        id: fileio
-    }
+    width: 1280
+    height: 768
 
     menuBar: MenuBar {
 
@@ -25,24 +24,27 @@ ApplicationWindow {
             title: "File"
 
             MenuItem {
-                text: "Save"
+                text: "Save File"
                 shortcut: "Ctrl+S"
                 onTriggered: {
-                    fileio.save(edit.text, fileUrl);
+                    openDialog.setFolder(folderUrl)
+                    openDialog.open();
                 }
+            }
+
+            MenuItem {
+                text: "Quit"
+                shortcut: "Crtl+X"
+                onTriggered: main.close();
             }
         }
     }
 
-    CodeEditor{
-        id: edit
-
-    }
-
-    onFileUrlChanged: {        
-        edit.text = fileio.load(fileUrl);
+    FileDialog {
+        id: openDialog
+        title: "Please choose a file"
+        onAccepted: {
+            editWindow.fileUrl = openDialog.fileUrl;
+        }
     }
 }
-
-
-

@@ -8,16 +8,17 @@ import "Helper.js" as Helper
 
 
 
-ApplicationWindow {
+ApplicationWindow {    
+    id: main
+    visible: true
 
     property string folderUrl: "file:///work/qbrix/resources"
     property string fileUrl: "file:///work/qbrix/resources/Button.qml"
     property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
+    property string componentName: ""
 
     property variant codeEditor;
-
-    id: main
-    visible: true
+    property variant editWindow;
 
     width: 1280
     height: 768
@@ -31,11 +32,9 @@ ApplicationWindow {
     }
 
     onFolderUrlChanged: {
-        if (codeEditor) codeEditor.destroy();
+        if (codeEditor) codeEditor.destroy();        
         componentsFolderModel.folder = folderUrl;
     }
-
-
 
     menuBar: MenuBar {
 
@@ -43,10 +42,26 @@ ApplicationWindow {
             title: "File"
 
             MenuItem {
-                text: "Open"
+                text: "Open Folder"
                 shortcut: "Ctrl+O"
                 onTriggered: {
                     openDialog.open();
+                }
+            }
+
+            MenuItem {
+                text: "Create File"
+                shortcut: "Ctrl+N"
+                onTriggered: {
+                    var component = Qt.createComponent("EditWindow.qml");
+                    if (component.status == Component.Ready){
+                        editWindow = component.createObject(main);
+                        editWindow.folderUrl = folderUrl;
+                    }
+                    else if (component.status == Component.Error) {
+                        // Error Handling
+                        console.log("Error loading component:", component.errorString());
+                    }
                 }
             }
 
@@ -60,8 +75,7 @@ ApplicationWindow {
 
     FileDialog {
         id: openDialog
-        title: "Please choose a folder"
-        folder: shortcuts.home
+        title: "Please choose a folder"        
         selectFolder: true
 
         onAccepted: {
@@ -70,19 +84,18 @@ ApplicationWindow {
     }
 
     //creating new CodeEdit and load code
-    function loadCode(fileUrl , isJSON) {
+    function loadCode(fileUrl) {
         var component = Qt.createComponent("CodeEditor.qml");
         if (component.status == Component.Ready){
             if (codeEditor) codeEditor.destroy();
             codeEditor = component.createObject(editArea);
             codeEditor.fileUrl = fileUrl;
             codeEditor.dataChanged.connect(function (text){
-                var source = componentLoader.source;
+            var source = componentLoader.source;
+                fileio.save(text, fileUrl);
                 componentLoader.source = "";
                 cacheManager.clear();
-                fileio.save(text, fileUrl);
-                if (isJSON) componentLoader.setSource(source, Helper.parseJSON(text));
-                else componentLoader.source = source;
+                componentLoader.setSource(source, Helper.tryParseJSON(text));
             });
         }
         else if (component.status == Component.Error) {
@@ -91,48 +104,35 @@ ApplicationWindow {
         }
     }
 
-    // Load List of Avalible DataSet
-    function loadDataSets() {
-        componentsFolderModel.selection = componentsSetTable.selection;
-        testDataTable.selection.clear();
-        componentsSetTable.model.selection.forEach(function (rowIndex) {
-            var name = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
-            testDataFolderModel.folder = main.folderUrl + "/TestData/" + name;
-        });
-    }
-
     // Load selected component
-    function loadComponent(testData) {        
-        componentLoader.source = "";
-        cacheManager.trim();
+    function loadComponent(testData) {
+        componentsFolderModel.selection = componentsSetTable.selection;
         componentsSetTable.model.selection.forEach(function (rowIndex) {
             main.fileUrl = main.folderUrl + "/" + componentsSetTable.model.get(rowIndex, "fileName");
-            if (testData) {
-                loadCode(dataFileUrl, true);
-                componentLoader.setSource(main.fileUrl, testData);
-            }
-            else  {
-                loadCode(fileUrl);
-                componentLoader.setSource(main.fileUrl, {});
-            }
+            componentName = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
         });
+
+        testDataFolderModel.folder = main.folderUrl + "/TestData/" + componentName;
+        if (testData) {
+            loadCode(dataFileUrl);
+            componentLoader.setSource(main.fileUrl, testData);
+        }
+        else  {
+            testDataTable.selection.clear();
+            loadCode(fileUrl);
+            componentLoader.setSource(main.fileUrl, {});
+        }
     }
 
     // Apply JSON Data to component
-    function applyData() {        
-        var componentName;
+    function applyData() {
         testDataFolderModel.selection = testDataTable.selection;
-        componentsSetTable.model.selection.forEach(function (rowIndex) {
-            componentName = componentsSetTable.model.get(rowIndex, "fileName").replace(".qml" ,"");
+        testDataTable.model.selection.forEach(function (rowIndex) {
+            dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName");
         });
-        testDataTable.model.selection.forEach(function (rowIndex){
-            dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName")
-
-            var TestData = Helper.parseJSON(fileio.load(dataFileUrl));
-            if (TestData === {}) loadCode(dataFileUrl);
-            else loadComponent(TestData);
-
-        });
+        var TestData = Helper.tryParseJSON(fileio.load(dataFileUrl));
+        if (TestData === {}) loadCode(dataFileUrl);
+        else loadComponent(TestData);
     }
 
 
@@ -167,12 +167,12 @@ ApplicationWindow {
                 }
 
                 onClicked: {
-                    // Load List of Avalible DataSet
-                    loadDataSets();
+                    // Load List of Avalible DataSet and Load component
+                    //loadDataSets();
                     loadComponent();
                 }
                 onDoubleClicked: {                    
-                    createNewWindow(fileUrl);
+
                 }
 
                 model: componentsFolderModel
@@ -203,7 +203,7 @@ ApplicationWindow {
                 }
 
                 onDoubleClicked: {                    
-                    createNewWindow(dataFileUrl);
+
                 }
 
                 model: testDataFolderModel
@@ -218,7 +218,13 @@ ApplicationWindow {
                 id: componentLoader
                 x: parent.width/2 - componentLoader.width/2
                 y: parent.height/2 - componentLoader.height/2
-               // anchors.centerIn: parent
+                // anchors.centerIn: parent
+
+                MouseArea {
+                    id: mouseArea
+                    anchors.fill: componentLoader
+                    drag.target: componentLoader
+                }
             }
         }
 

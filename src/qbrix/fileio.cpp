@@ -2,6 +2,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
+#include <QtCore/QObject>
 
 fileio::fileio()
 {
@@ -13,7 +14,7 @@ bool fileio::save(const QString& data, const QString& url){
     QUrl url_(url);
     QFile file( url_.toLocalFile());
 
-    if(file.open(QIODevice::ReadWrite)){
+    if(file.open(QIODevice::WriteOnly | QIODevice::Truncate)){
         QTextStream stream(&file);
         stream << data << endl;
         return true;
