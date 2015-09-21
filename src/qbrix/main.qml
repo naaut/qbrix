@@ -114,13 +114,13 @@ ApplicationWindow {
 
         testDataFolderModel.folder = main.folderUrl + "/TestData/" + componentName;
         if (testData) {
-            loadCode(dataFileUrl);
             componentLoader.setSource(main.fileUrl, testData);
+            loadCode(dataFileUrl);            
         }
         else  {
             testDataTable.selection.clear();
-            loadCode(fileUrl);
             componentLoader.setSource(main.fileUrl, {});
+            loadCode(fileUrl);
         }
     }
 
@@ -133,7 +133,6 @@ ApplicationWindow {
         var TestData = Helper.tryParseJSON(fileio.load(dataFileUrl));
         loadComponent(TestData);
     }
-
 
     SplitView {
         id: splitView
@@ -166,12 +165,7 @@ ApplicationWindow {
                 }
 
                 onClicked: {
-                    // Load List of Avalible DataSet and Load component
-                    //loadDataSets();
                     loadComponent();
-                }
-                onDoubleClicked: {                    
-
                 }
 
                 model: componentsFolderModel
@@ -201,16 +195,12 @@ ApplicationWindow {
                     applyData();
                 }
 
-                onDoubleClicked: {                    
-
-                }
-
                 model: testDataFolderModel
             }
         }
 
-        Rectangle {
-            color:"darkgrey"
+        Makeup {
+            //color:"darkgrey"
             width: 400
 
             Loader{

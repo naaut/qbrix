@@ -53,8 +53,6 @@ ScrollView {
             syntaxHighlighter.setHighlighter(edit);
         }
 
-
-
         FileIO{
             id: dataFileIO
         }

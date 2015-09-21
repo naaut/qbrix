@@ -5,6 +5,8 @@
         <file>Helper.js</file>
         <file>ErrorMessage.qml</file>
         <file>EditWindow.qml</file>
+        <file>Makeup.qml</file>
+        <file>Ui.qml</file>
     </qresource>
     <qresource prefix="/resources">
         <file>dictionaries/qml.txt</file>
