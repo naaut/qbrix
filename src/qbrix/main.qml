@@ -131,8 +131,7 @@ ApplicationWindow {
             dataFileUrl = main.folderUrl + "/TestData/" + componentName + "/" + testDataTable.model.get(rowIndex, "fileName");
         });
         var TestData = Helper.tryParseJSON(fileio.load(dataFileUrl));
-        if (TestData === {}) loadCode(dataFileUrl);
-        else loadComponent(TestData);
+        loadComponent(TestData);
     }
 
 

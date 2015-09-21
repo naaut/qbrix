@@ -27,15 +27,14 @@ ApplicationWindow {
                 text: "Save File"
                 shortcut: "Ctrl+S"
                 onTriggered: {
-                    openDialog.setFolder(folderUrl)
-                    openDialog.open();
+
                 }
             }
 
             MenuItem {
                 text: "Quit"
                 shortcut: "Crtl+X"
-                onTriggered: main.close();
+                onTriggered: editWindow.close();
             }
         }
     }
@@ -47,4 +46,5 @@ ApplicationWindow {
             editWindow.fileUrl = openDialog.fileUrl;
         }
     }
+
 }
