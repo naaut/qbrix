@@ -17,8 +17,7 @@ ApplicationWindow {
     property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
     property string componentName: ""
 
-    property variant codeEditor;
-    property variant editWindow;
+    property Item codeEditor;
 
     width: 1280
     height: 768
@@ -32,7 +31,7 @@ ApplicationWindow {
     }
 
     onFolderUrlChanged: {
-        if (codeEditor) codeEditor.destroy();        
+        if (codeEditor) codeEditor.destroy(10);
         componentsFolderModel.folder = folderUrl;
     }
 
@@ -50,18 +49,10 @@ ApplicationWindow {
             }
 
             MenuItem {
-                text: "Create File"
-                shortcut: "Ctrl+N"
+                text: "Open Image"
+                shortcut: "Ctrl+I"
                 onTriggered: {
-                    var component = Qt.createComponent("EditWindow.qml");
-                    if (component.status == Component.Ready){
-                        editWindow = component.createObject(main);
-                        editWindow.folderUrl = folderUrl;
-                    }
-                    else if (component.status == Component.Error) {
-                        // Error Handling
-                        console.log("Error loading component:", component.errorString());
-                    }
+                    openFileDialog.open();
                 }
             }
 
@@ -83,6 +74,16 @@ ApplicationWindow {
         }
     }
 
+    FileDialog {
+        id: openFileDialog
+        title: "Please choose a file"
+        onAccepted: {
+            makeup.idealImage = openFileDialog.fileUrl;
+        }
+    }
+
+
+
     //creating new CodeEdit and load code
     function loadCode(fileUrl) {
         var component = Qt.createComponent("CodeEditor.qml");
@@ -91,11 +92,11 @@ ApplicationWindow {
             codeEditor = component.createObject(editArea);
             codeEditor.fileUrl = fileUrl;
             codeEditor.dataChanged.connect(function (text){
-            var source = componentLoader.source;
+            var source = makeup.componentLoader.source;
                 fileio.save(text, fileUrl);
-                componentLoader.source = "";
+                makeup.componentLoader.source = "";
                 cacheManager.clear();
-                componentLoader.setSource(source, Helper.tryParseJSON(text));
+                makeup.componentLoader.setSource(source, Helper.tryParseJSON(text));
             });
         }
         else if (component.status == Component.Error) {
@@ -114,12 +115,12 @@ ApplicationWindow {
 
         testDataFolderModel.folder = main.folderUrl + "/TestData/" + componentName;
         if (testData) {
-            componentLoader.setSource(main.fileUrl, testData);
+            makeup.componentLoader.setSource(main.fileUrl, testData);
             loadCode(dataFileUrl);            
         }
         else  {
             testDataTable.selection.clear();
-            componentLoader.setSource(main.fileUrl, {});
+            makeup.componentLoader.setSource(main.fileUrl, {});
             loadCode(fileUrl);
         }
     }
@@ -200,21 +201,8 @@ ApplicationWindow {
         }
 
         Makeup {
-            //color:"darkgrey"
+            id: makeup
             width: 400
-
-            Loader{
-                id: componentLoader
-                x: parent.width/2 - componentLoader.width/2
-                y: parent.height/2 - componentLoader.height/2
-                // anchors.centerIn: parent
-
-                MouseArea {
-                    id: mouseArea
-                    anchors.fill: componentLoader
-                    drag.target: componentLoader
-                }
-            }
         }
 
         Rectangle {

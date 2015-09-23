@@ -18,19 +18,25 @@ import QtQuick 2.4
         idealImage: app.currentRegion.commonResourcesUrl + "/images/name.png"
  */
 
-// @TODO причесать как следует
 Item {
+    id: i
 
-    Ui{
-        id: ui
-    }
-
-    //anchors.fill: parent
+    property var rootAppWindow : parent;
+    property real mScale: 1.0;
     property var modes: ({
         PX: 0,
         PP: 1
-    })
+    });
     property int mode: modes.PX
+    property var px2pph: {
+        return function(px) {
+            if (rootAppWindow)
+                return px / rootAppWindow.height * 100;
+            else
+                return px;
+        }
+    }
+
     /*!
      \brief возвращает следующее за `current` значение из enum'a `list`
      \param type:object
@@ -44,28 +50,30 @@ Item {
         }
         return n;
     }
+
     function nameMode() {
         switch (mode) {
         case modes.PX: return 'px';
         case modes.PP: return '%';
         }
     }
+
     function getSize(v) {
         switch (mode) {
         case modes.PX:
             return Math.floor(v);
         case modes.PP:
-            return ui.px2pph(v).toFixed(2);
+            return px2pph(v).toFixed(2);
         }
     }
 
     property alias idealImage: ideal.source
+    property alias componentLoader: componentLoader
     property bool ctrl: false
     Component.onCompleted: {
-
         forceActiveFocus();
     }
-    onActiveFocusChanged: if (!activeFocus) forceActiveFocus()
+
     Keys.onUpPressed: ideal.opacity += 0.5
     Keys.onDownPressed: ideal.opacity -= 0.5
     Keys.onLeftPressed: {
@@ -75,25 +83,33 @@ Item {
     Keys.onPressed: {
         if (event.modifiers & Qt.ControlModifier) {
             mainMouse.cursorShape = Qt.CrossCursor;
-
             switch (event.key) {
-            // 0
-            case 48:
-                // @TODO сломано
-                ideal.width = d.idealW;
-                ideal.height = d.idealH;
-                rootAppWindow.width = d.rootW;
-                rootAppWindow.height = d.rootH;
-                debugRect.width = 1.1;
-                debugRect.height = 1.1;
-                debugRect.x = 1.1;
-                debugRect.y = 1.1;
-                Ui.dpimult = 1;
+            //"Ctrl" + "-"
+            case 45:
+                // Clear All
+                debugRect.width = 0;
+                debugRect.height = 0;              
+                debugRect.x = 0;
+                debugRect.y = 0;
+                debugInfo.text = "";
+                ideal.source = ""
+                mScale = 1;
                 break;
-            // P
+            // "Ctrl" + "P"
             case 80:
+                // Set mode to %
                 mode = next(modes, mode);
                 d.updateDebugInfo();
+                break;
+            // "Ctrl" + "R"
+            case 82:
+                // Reset Scale and set at center
+                mScale = 1;
+                componentLoader.x = i.width/2 - componentLoader.width/2;
+                componentLoader.y = i.height/2 - componentLoader.height/2;
+                ideal.x = i.width/2 - ideal.width/2;
+                ideal.y = i.height/2 - ideal.height/2;
+                corner.updateSize();
                 break;
             }
         }
@@ -101,9 +117,40 @@ Item {
     Keys.onReleased: {
         mainMouse.cursorShape = Qt.ArrowCursor;
     }
+
+    Loader{
+        id: componentLoader
+
+        x: parent.width/2 - componentLoader.width/2
+        y: parent.height/2 - componentLoader.height/2
+        MouseArea {
+            anchors.fill: parent
+            drag.target: parent
+        }
+        transform: Scale { xScale: mScale;  yScale: mScale}
+        onSourceChanged: {
+            componentLoader.x = parent.width/2 - componentLoader.width/2;
+            componentLoader.y = parent.height/2 - componentLoader.height/2;
+        }
+    }
+
     Image {
         id: ideal
         opacity: 0.5
+
+        onSourceChanged: {            
+            ideal.width = undefined;
+            ideal.height = undefined;
+            ideal.x = parent.width/2 - ideal.width/2;
+            ideal.y = parent.height/2 - ideal.height/2;
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            drag.target: parent
+        }
+
+        transform: Scale { xScale: mScale;  yScale: mScale}
     }
     QtObject {
         id: d
@@ -120,10 +167,7 @@ Item {
         // когда объект драгается — это офсет от точки, в которой объект схватили, до origin точки объекта
         property real draggingOffsetX: 0
         property real draggingOffsetY: 0
-        readonly property real rootW: main.width
-        readonly property real rootH: main.height
-        readonly property real idealW: ideal.width
-        readonly property real idealH: ideal.height
+
         function getWidth(x1, x2) {
             return Math.abs(x1 - x2);
         }
@@ -134,6 +178,7 @@ Item {
             debugInfo.text = 'w:'+getSize(d.w)+' h:'+getSize(d.h)+' (' + nameMode() + ')';
         }
     }
+
     /*!
       \brief точка (x,y) находится внутри элемента `target`
           -----------
@@ -146,8 +191,9 @@ Item {
        \return type:bool
       */
     function insideObject(x, y, target) {
-        return inside(x, y, target.x, target.y, target.width, target.height);
+        return inside(x, y, target.x, target.y, target.width * mScale, target.height * mScale);
     }
+
     function inside(x, y, ox, oy, ow, oh) {
         return x > ox &&
                x < ox + ow &&
@@ -181,10 +227,12 @@ Item {
         }
         corner.visible = false;
     }
+
     function updateElement(mouseX, mouseY, target) {
         target.x = mouseX - d.draggingOffsetX;
         target.y = mouseY - d.draggingOffsetY;
     }
+
     /*!
       \param type:int cornerPos 0: upper left, 1: upper right,
                                 2: bottom left, 3: bottom right
@@ -197,35 +245,33 @@ Item {
             offsetY = debugRect.y - (mouseY - d.resizingOffsetY);
             debugRect.x -= offsetX;
             debugRect.y -= offsetY;
-            debugRect.width += offsetX;
-            debugRect.height += offsetY;
+            debugRect.width += offsetX/mScale;
+            debugRect.height += offsetY/mScale;
             break;
         case corner._UPPER_RIGHT:
-            offsetX = debugRect.x - ((mouseX + d.resizingOffsetX) - debugRect.width);
+            offsetX = debugRect.x - ((mouseX + (d.resizingOffsetX)) - debugRect.width);
             offsetY = debugRect.y - (mouseY - d.resizingOffsetY);
-            debugRect.y -= offsetY;
-            debugRect.width -= offsetX;
-            debugRect.height += offsetY;
+            debugRect.y -= offsetY ;
+            debugRect.width -= offsetX/mScale;
+            debugRect.height += offsetY/mScale;
             break;
         case corner._BOTTOM_LEFT:
             offsetX = debugRect.x - (mouseX - d.resizingOffsetX);
             offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height);
             debugRect.x -= offsetX;
-            debugRect.width += offsetX;
-            debugRect.height -= offsetY;
+            debugRect.width += offsetX/mScale;
+            debugRect.height -= offsetY/mScale;
             break;
         case corner._BOTTOM_RIGHT:
-            offsetX = debugRect.x - ((mouseX + d.resizingOffsetX) - debugRect.width);
-            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height);
-            debugRect.width -= offsetX;
-            debugRect.height -= offsetY;
+            offsetX = debugRect.x - ((mouseX + d.resizingOffsetX/mScale) - debugRect.width);
+            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY/mScale) - debugRect.height);
+            debugRect.width -= offsetX/mScale;
+            debugRect.height -= offsetY/mScale;
             break;
         }
-
         d.w = debugRect.width;
         d.h = debugRect.height;
         d.updateDebugInfo();
-
         corner.updateSize();
     }
     /*!
@@ -234,56 +280,73 @@ Item {
       */
     function startResizing(mouseX, mouseY, cornerPos) {
         d.resizingCorner = cornerPos;
+
+//        console.log(">>>>>>>> debugRect", debugRect.width, debugRect.height)
+//        console.log(">>>>>>>> mScale", mScale)
+//        console.log(">>>>>>>>", corner.positions[cornerPos].x, corner.positions[cornerPos].y)
+//        console.log(">>>>>>>>", corner.width, corner.height)
+//        console.log(">>>>>>>>", mouseX, mouseY)
+
         switch (cornerPos) {
         case corner._UPPER_LEFT:
             d.resizingOffsetX = mouseX - corner.positions[cornerPos].x;
             d.resizingOffsetY = mouseY - corner.positions[cornerPos].y;
             break;
         case corner._UPPER_RIGHT:
-            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width - mouseX;
+            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width/mScale - mouseX;
             d.resizingOffsetY = mouseY - corner.positions[cornerPos].y;
             break;
         case corner._BOTTOM_LEFT:
             d.resizingOffsetX = mouseX - corner.positions[cornerPos].x;
-            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height - mouseY;
+            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height/mScale - mouseY;
             break;
         case corner._BOTTOM_RIGHT:
-            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width - mouseX;
-            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height - mouseY;
+            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width/mScale - mouseX;
+            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height/mScale - mouseY;
             break;
         }
     }
+
     function stopResizing() {
         d.resizingCorner = -1;
         d.resizingOffsetX = 0;
         d.resizingOffsetY = 0;
     }
+
     function startDragging(mouseX, mouseY, target) {
         d.draggingElement = target;
         d.draggingOffsetX = mouseX - target.x;
         d.draggingOffsetY = mouseY - target.y;
     }
+
     function stopDragging() {
         d.draggingElement = null;
         d.draggingOffsetX = 0;
         d.draggingOffsetY = 0;
     }
+
     function stopDrawing() {
         d.isDrawing = false;
         corner.updateSize();
     }
+
     MouseArea {
         id: mainMouse
         anchors.fill: parent
         propagateComposedEvents: true
         hoverEnabled: true
+
+        onContainsMouseChanged: {
+            if (containsMouse && !activeFocus) forceActiveFocus();
+        }
+
         onPressed: {
+            corner.visible = false;
             if (insideObject(mouseX, mouseY, debugRect)) {
                 var cornerNum = whichCornerHovered(mouseX, mouseY, debugRect);
                 if (cornerNum != null) {
                     return startResizing(mouseX, mouseY, cornerNum);
                 }
-
                 return startDragging(mouseX, mouseY, debugRect);
             }
             if (!(mouse.modifiers & Qt.ControlModifier)) {
@@ -297,13 +360,14 @@ Item {
             // ресайз квадрата за уголки
             if (d.resizingCorner > -1) {
                 resizeRect(mouseX, mouseY, d.resizingCorner);
+                updateElement(debugRect.x, debugRect.y - debugInfo.height, debugInfo);
                 return;
             }
 
             // таскание элемента
             if (d.draggingElement) {
                 updateElement(mouseX, mouseY, d.draggingElement);
-                updateElement(mouseX, mouseY, debugInfo); // хардкод :p
+                updateElement(mouseX, mouseY - debugInfo.height, debugInfo); // хардкод :p
                 return;
             }
 
@@ -316,8 +380,8 @@ Item {
                 debugRect.width = d.w || 1
                 debugRect.height = d.h || 1
 
-                debugInfo.x = mouseX;
-                debugInfo.y = mouseY;
+                debugInfo.x = debugRect.x;
+                debugInfo.y = debugRect.y - debugInfo.height
                 d.updateDebugInfo();
                 return;
             }
@@ -335,27 +399,16 @@ Item {
         onWheel: {
             if (wheel.modifiers & Qt.ControlModifier) {
                 if (wheel.angleDelta.y > 0) {
-                    //Ui.dpimult += 0.1;
-                    ideal.width *= 1.1;
-                    ideal.height *= 1.1;
-                    rootAppWindow.width *= 1.1;
-                    rootAppWindow.height *= 1.1;
-                    debugRect.width *= 1.1;
-                    debugRect.height *= 1.1;
-                    debugRect.x *= 1.1;
-                    debugRect.y *= 1.1;
+                    mScale += 0.1;
+                    corner.visible = false;
+                    corner.updateSize();
                 } else {
-                   // Ui.dpimult -= 0.1;
-                    ideal.width /= 1.1;
-                    ideal.height /= 1.1;
-                    rootAppWindow.width /= 1.1;
-                    rootAppWindow.height /= 1.1;
-                    debugRect.width /= 1.1;
-                    debugRect.height /= 1.1;
-                    debugRect.x /= 1.1;
-                    debugRect.y /= 1.1;
+                    mScale -= 0.1;
+                    corner.visible = false;
+                    corner.updateSize();
                 }
             }
+            updateElement(debugRect.x, debugRect.y - debugInfo.height, debugInfo);
         }
     }
     Rectangle {
@@ -364,6 +417,7 @@ Item {
         border.width: 1
         color: 'red'
         opacity: 0.3
+        transform: Scale { xScale: mScale;  yScale: mScale}
     }
     Rectangle {
         id: corner
@@ -389,8 +443,8 @@ Item {
             if (!corner.visible) corner.visible = true;
         }
         function updateSize() {
-            corner.width = debugRect.width / 4;
-            corner.height = debugRect.height / 4;
+            corner.width = (debugRect.width / 4) * mScale;
+            corner.height = (debugRect.height / 4) * mScale;
         }
     }
     Text {
