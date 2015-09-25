@@ -3,19 +3,17 @@ import QtQuick 2.4
 /*!
  \brief Помощник верстальщика
     ctrl + mousePress    рисовать измеряющий квадратик
-    ctrl + p             изменить режим измерения квадратиком (пиксели/проценты)
-    ctrl + wheel         зум (изменить размер окна)
+    ctrl + P             изменить режим измерения квадратиком (пиксели/проценты)
+    ctrp + Q             удалить измеряющий квадратик
+    ctrl + W             установить зум в 1
+    ctrl + E             удалить картинку
+    ctrl + R             установить зум в 1, отцентрировать квадрат, компонент и картинку
+    ctrl + "-"           сбросить зум, удалить картинку
+    ctrl + wheel         зум
     ctrl + upArrow       переключиться на дизайн
     ctrl + downArrow     переключиться на верстку
 
     квадратик можно передвигать и растягивать (изменять размеры)
-
-    полезности:
-    1. выставить размеры окна, как у png'шки
-        rootAppWindow.height = 616;
-        rootAppWindow.width = 360;
-    2. стандартный путь до картинок в ресурсах
-        idealImage: app.currentRegion.commonResourcesUrl + "/images/name.png"
  */
 
 Item {
@@ -86,22 +84,40 @@ Item {
             switch (event.key) {
             //"Ctrl" + "-"
             case 45:
-                // Clear All
+                //Clear All
                 debugRect.width = 0;
-                debugRect.height = 0;              
-                debugRect.x = 0;
-                debugRect.y = 0;
+                debugRect.height = 0;
                 debugInfo.text = "";
-                ideal.source = ""
+                ideal.source = "";
                 mScale = 1;
                 break;
-            // "Ctrl" + "P"
+            //"Ctrl" + "P"
             case 80:
                 // Set mode to %
                 mode = next(modes, mode);
                 d.updateDebugInfo();
                 break;
-            // "Ctrl" + "R"
+            //"Ctrl" + "E"
+            case 69:
+                // Clear ideal
+                ideal.source = "";
+                break;
+            //"Ctrl" + "Q"
+            case 81:
+                // clear debug Rectangle
+                debugRect.width = 0;
+                debugRect.height = 0;  
+                debugInfo.text = "";
+                ideal.source = ""
+                corner.visible = false;
+                break;
+            //"Ctrl" + "W"
+            case 87:
+                //reset Scale
+                mScale = 1;
+                corner.visible = false;
+                break;
+            //"Ctrl" + "R"
             case 82:
                 // Reset Scale and set at center
                 mScale = 1;
@@ -109,7 +125,11 @@ Item {
                 componentLoader.y = i.height/2 - componentLoader.height/2;
                 ideal.x = i.width/2 - ideal.width/2;
                 ideal.y = i.height/2 - ideal.height/2;
+                debugRect.x = i.width/2 - debugRect.width/2;
+                debugRect.y = i.height/2 - debugRect.height/2;
+                corner.visible = false;
                 corner.updateSize();
+                updateElement(debugRect.x , debugRect.y - debugInfo.height, debugInfo);
                 break;
             }
         }
@@ -120,9 +140,6 @@ Item {
 
     Loader{
         id: componentLoader
-
-        x: parent.width/2 - componentLoader.width/2
-        y: parent.height/2 - componentLoader.height/2
         MouseArea {
             anchors.fill: parent
             drag.target: parent
@@ -134,15 +151,15 @@ Item {
         }
     }
 
-    Image {
+     AnimatedImage {
         id: ideal
         opacity: 0.5
 
-        onSourceChanged: {            
+        onSourceChanged: {
             ideal.width = undefined;
             ideal.height = undefined;
-            ideal.x = parent.width/2 - ideal.width/2;
-            ideal.y = parent.height/2 - ideal.height/2;
+            ideal.x = i.width/2 - ideal.width/2;
+            ideal.y = i.height/2 - ideal.height/2;
         }
 
         MouseArea {
@@ -221,7 +238,7 @@ Item {
     function whichCornerHovered(mouseX, mouseY) {
         for (var i = 0; i < corner.positions.length; i++) {
             var c = corner.positions[i];
-            if (inside(mouseX, mouseY, c.x, c.y, corner.width, corner.height)) {
+            if (inside(mouseX, mouseY, c.x, c.y, corner.width * mScale, corner.height * mScale)) {
                 return i;
             }
         }
@@ -249,7 +266,7 @@ Item {
             debugRect.height += offsetY/mScale;
             break;
         case corner._UPPER_RIGHT:
-            offsetX = debugRect.x - ((mouseX + (d.resizingOffsetX)) - debugRect.width);
+            offsetX = debugRect.x - ((mouseX + (d.resizingOffsetX)) - debugRect.width * mScale);
             offsetY = debugRect.y - (mouseY - d.resizingOffsetY);
             debugRect.y -= offsetY ;
             debugRect.width -= offsetX/mScale;
@@ -257,18 +274,20 @@ Item {
             break;
         case corner._BOTTOM_LEFT:
             offsetX = debugRect.x - (mouseX - d.resizingOffsetX);
-            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height);
+            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height * mScale);
             debugRect.x -= offsetX;
             debugRect.width += offsetX/mScale;
             debugRect.height -= offsetY/mScale;
             break;
         case corner._BOTTOM_RIGHT:
-            offsetX = debugRect.x - ((mouseX + d.resizingOffsetX/mScale) - debugRect.width);
-            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY/mScale) - debugRect.height);
+            offsetX = debugRect.x - ((mouseX + d.resizingOffsetX) - debugRect.width * mScale);
+            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height * mScale);
             debugRect.width -= offsetX/mScale;
             debugRect.height -= offsetY/mScale;
             break;
         }
+        if (debugRect.width <= 1) debugRect.width = 1;
+        if (debugRect.height <= 1) debugRect.height = 1;
         d.w = debugRect.width;
         d.h = debugRect.height;
         d.updateDebugInfo();
@@ -280,29 +299,22 @@ Item {
       */
     function startResizing(mouseX, mouseY, cornerPos) {
         d.resizingCorner = cornerPos;
-
-//        console.log(">>>>>>>> debugRect", debugRect.width, debugRect.height)
-//        console.log(">>>>>>>> mScale", mScale)
-//        console.log(">>>>>>>>", corner.positions[cornerPos].x, corner.positions[cornerPos].y)
-//        console.log(">>>>>>>>", corner.width, corner.height)
-//        console.log(">>>>>>>>", mouseX, mouseY)
-
         switch (cornerPos) {
         case corner._UPPER_LEFT:
             d.resizingOffsetX = mouseX - corner.positions[cornerPos].x;
             d.resizingOffsetY = mouseY - corner.positions[cornerPos].y;
             break;
         case corner._UPPER_RIGHT:
-            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width/mScale - mouseX;
+            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width * mScale - mouseX;
             d.resizingOffsetY = mouseY - corner.positions[cornerPos].y;
             break;
         case corner._BOTTOM_LEFT:
             d.resizingOffsetX = mouseX - corner.positions[cornerPos].x;
-            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height/mScale - mouseY;
+            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height * mScale - mouseY;
             break;
         case corner._BOTTOM_RIGHT:
-            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width/mScale - mouseX;
-            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height/mScale - mouseY;
+            d.resizingOffsetX = corner.positions[cornerPos].x + corner.width * mScale - mouseX;
+            d.resizingOffsetY = corner.positions[cornerPos].y + corner.height * mScale - mouseY;
             break;
         }
     }
@@ -338,7 +350,7 @@ Item {
 
         onContainsMouseChanged: {
             if (containsMouse && !activeFocus) forceActiveFocus();
-        }
+        }        
 
         onPressed: {
             corner.visible = false;
@@ -373,15 +385,15 @@ Item {
 
             // рисование элемента
             if (d.isDrawing) {
-                d.w = d.getWidth(d.x_, mouseX)
-                d.h = d.getHeight(d.y_, mouseY)
-                debugRect.x = Math.min(mouseX, d.x_)
-                debugRect.y = Math.min(mouseY, d.y_)
-                debugRect.width = d.w || 1
-                debugRect.height = d.h || 1
+                d.w = d.getWidth(d.x_, mouseX);
+                d.h = d.getHeight(d.y_, mouseY);
+                debugRect.x = Math.min(mouseX, d.x_);
+                debugRect.y = Math.min(mouseY, d.y_);
+                debugRect.width = d.w/mScale || 1;
+                debugRect.height = d.h/mScale || 1;
 
                 debugInfo.x = debugRect.x;
-                debugInfo.y = debugRect.y - debugInfo.height
+                debugInfo.y = debugRect.y - debugInfo.height;
                 d.updateDebugInfo();
                 return;
             }
@@ -404,6 +416,7 @@ Item {
                     corner.updateSize();
                 } else {
                     mScale -= 0.1;
+                    if (mScale <= 0.11) mScale = 0.1;
                     corner.visible = false;
                     corner.updateSize();
                 }
@@ -425,15 +438,16 @@ Item {
         border.color: 'white'
         border.width: 1
         visible: false
+
         readonly property int _UPPER_LEFT: 0
         readonly property int _UPPER_RIGHT: 1
         readonly property int _BOTTOM_LEFT: 2
         readonly property int _BOTTOM_RIGHT: 3
         property var positions: [
             {x: debugRect.x, y: debugRect.y},
-            {x: debugRect.x + corner.width * 3, y: debugRect.y},
-            {x: debugRect.x, y: debugRect.y + corner.height * 3},
-            {x: debugRect.x + corner.width * 3, y: debugRect.y + corner.height * 3}
+            {x: debugRect.x + corner.width * 3 * mScale, y: debugRect.y},
+            {x: debugRect.x, y: debugRect.y + corner.height * 3 * mScale},
+            {x: debugRect.x + corner.width * 3 * mScale, y: debugRect.y + corner.height * 3 * mScale}
         ]
         function show(i) {
             if (i == null || i === -1) return;
@@ -443,14 +457,26 @@ Item {
             if (!corner.visible) corner.visible = true;
         }
         function updateSize() {
-            corner.width = (debugRect.width / 4) * mScale;
-            corner.height = (debugRect.height / 4) * mScale;
+            corner.width = (debugRect.width / 4);
+            corner.height = (debugRect.height / 4);
         }
+        transform: Scale { xScale: mScale;  yScale: mScale}
+
     }
     Text {
         id: debugInfo
         color: 'black'
         styleColor: "#90ffffff"
         style: Text.Outline
+    }
+
+    Text {
+        id: scale
+        color: 'black'
+        styleColor: "#90ffffff"
+        style: Text.Outline
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        text: "scale: " + mScale.toFixed(1);
     }
 }
