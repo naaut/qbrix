@@ -140,7 +140,6 @@ ApplicationWindow {
         anchors.fill: parent
 
         Column {
-
             width: 200
 
             TableView {
@@ -202,7 +201,7 @@ ApplicationWindow {
 
         Makeup {
             id: makeup
-            width: 400
+            width: 600
         }
 
         Rectangle {

@@ -260,24 +260,24 @@ Item {
         case corner._UPPER_LEFT:
             offsetX = debugRect.x - (mouseX - d.resizingOffsetX);
             offsetY = debugRect.y - (mouseY - d.resizingOffsetY);
-            debugRect.x -= offsetX;
-            debugRect.y -= offsetY;
             debugRect.width += offsetX/mScale;
             debugRect.height += offsetY/mScale;
+            if (debugRect.width > 2) debugRect.x -= offsetX;
+            if (debugRect.height > 2)  debugRect.y -= offsetY;
             break;
         case corner._UPPER_RIGHT:
             offsetX = debugRect.x - ((mouseX + (d.resizingOffsetX)) - debugRect.width * mScale);
             offsetY = debugRect.y - (mouseY - d.resizingOffsetY);
-            debugRect.y -= offsetY ;
             debugRect.width -= offsetX/mScale;
             debugRect.height += offsetY/mScale;
+            if (debugRect.height > 2)  debugRect.y -= offsetY;
             break;
         case corner._BOTTOM_LEFT:
             offsetX = debugRect.x - (mouseX - d.resizingOffsetX);
-            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height * mScale);
-            debugRect.x -= offsetX;
+            offsetY = debugRect.y - ((mouseY + d.resizingOffsetY) - debugRect.height * mScale);            
             debugRect.width += offsetX/mScale;
             debugRect.height -= offsetY/mScale;
+            if (debugRect.width > 2) debugRect.x -= offsetX;
             break;
         case corner._BOTTOM_RIGHT:
             offsetX = debugRect.x - ((mouseX + d.resizingOffsetX) - debugRect.width * mScale);
