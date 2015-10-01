@@ -13,8 +13,8 @@ ApplicationWindow {
     visible: true
 
     property string folderUrl: "file:///work/qbrix/resources"
-    property string fileUrl: "file:///work/qbrix/resources/Button.qml"
-    property string dataFileUrl: "file:///work/qbrix/resources/TestData/Button/ButtonDataSet.json"
+    property string fileUrl: ""
+    property string dataFileUrl: ""
     property string componentName: ""
 
     property Item codeEditor;
@@ -22,46 +22,30 @@ ApplicationWindow {
     width: 1280
     height: 768
 
-    FileIO{
+    FileIO {
         id: fileio
     }
 
+    Watcher {
+        id: externalWatcher
+
+        onFileChanged: {
+            console.log("File changed", fileUrl)
+            reload();
+        }
+    }
+
     Component.onCompleted: {
-         componentsFolderModel.folder = folderUrl;
+        componentsFolderModel.folder = folderUrl;
     }
 
     onFolderUrlChanged: {
         if (codeEditor) codeEditor.destroy(10);
-        componentsFolderModel.folder = folderUrl;
+        componentsFolderModel.folder = folderUrl;        
     }
 
-    menuBar: MenuBar {
+    menuBar: MBar{
 
-        Menu {
-            title: "File"
-
-            MenuItem {
-                text: "Open Folder"
-                shortcut: "Ctrl+O"
-                onTriggered: {
-                    openDialog.open();
-                }
-            }
-
-            MenuItem {
-                text: "Open Image"
-                shortcut: "Ctrl+I"
-                onTriggered: {
-                    openFileDialog.open();
-                }
-            }
-
-            MenuItem {
-                text: "Quit"
-                shortcut: "Crtl+X"
-                onTriggered: Qt.quit()
-            }
-        }
     }
 
     FileDialog {
@@ -76,13 +60,11 @@ ApplicationWindow {
 
     FileDialog {
         id: openFileDialog
-        title: "Please choose a file"
+        title: "Please choose a image file"
         onAccepted: {
             makeup.idealImage = openFileDialog.fileUrl;
         }
     }
-
-
 
     //creating new CodeEdit and load code
     function loadCode(fileUrl) {
@@ -92,17 +74,25 @@ ApplicationWindow {
             codeEditor = component.createObject(editArea);
             codeEditor.fileUrl = fileUrl;
             codeEditor.dataChanged.connect(function (text){
-            var source = makeup.componentLoader.source;
                 fileio.save(text, fileUrl);
-                makeup.componentLoader.source = "";
-                cacheManager.clear();
-                makeup.componentLoader.setSource(source, Helper.tryParseJSON(text));
+                reload(text);               
             });
         }
         else if (component.status == Component.Error) {
             // Error Handling
             console.log("Error loading component:", component.errorString());
         }
+    }
+
+    //Reload component
+    function reload(text, dataFileName) {
+        var source = makeup.componentLoader.source;
+        makeup.componentLoader.source = "";
+        cacheManager.clear();
+        makeup.componentLoader.setSource(source, Helper.tryParseJSON(text));
+
+        if (dataFileName) externalWatcher.fileName =  dataFileName;
+        else externalWatcher.fileName =  fileUrl;
     }
 
     // Load selected component
@@ -116,12 +106,14 @@ ApplicationWindow {
         testDataFolderModel.folder = main.folderUrl + "/TestData/" + componentName;
         if (testData) {
             makeup.componentLoader.setSource(main.fileUrl, testData);
-            loadCode(dataFileUrl);            
+            loadCode(dataFileUrl);
+            externalWatcher.fileName = dataFileUrl;
         }
         else  {
             testDataTable.selection.clear();
             makeup.componentLoader.setSource(main.fileUrl, {});
             loadCode(fileUrl);
+            externalWatcher.fileName =  fileUrl;
         }
     }
 
@@ -153,7 +145,6 @@ ApplicationWindow {
                     role: "fileName"
                     title: qsTr("Element Name")
                 }
-
                 FolderListModel {
 
                     id: componentsFolderModel
@@ -163,11 +154,9 @@ ApplicationWindow {
                     nameFilters: ["*.qml"]
                     showDirs: false
                 }
-
                 onClicked: {
                     loadComponent();
                 }
-
                 model: componentsFolderModel
             }
 
@@ -181,7 +170,6 @@ ApplicationWindow {
                     role: "fileName"
                     title: qsTr("Data Sets")
                 }
-
                 FolderListModel {
                     id: testDataFolderModel
 
@@ -190,18 +178,16 @@ ApplicationWindow {
                     nameFilters: ["*.json"]
                     showDirs: false
                 }
-
                 onClicked: {
                     applyData();
                 }
-
                 model: testDataFolderModel
             }
         }
 
         Makeup {
             id: makeup
-            width: 600
+            width: 800
         }
 
         Rectangle {

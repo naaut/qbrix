@@ -3,11 +3,11 @@ function tryParseJSON(data) {
     var response;
     try
     {
-      response = JSON.parse(data);
+        response = JSON.parse(data);
     }
     catch (err)
     {
-       response = {};
+        response = {};
     }
     return response;
 }

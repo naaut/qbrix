@@ -3,6 +3,7 @@ import QtQuick 2.4
 /*!
  \brief Помощник верстальщика
     ctrl + mousePress    рисовать измеряющий квадратик
+    cntr + A             Сменить Z ideal и component
     ctrl + P             изменить режим измерения квадратиком (пиксели/проценты)
     ctrp + Q             удалить измеряющий квадратик
     ctrl + W             установить зум в 1
@@ -74,21 +75,28 @@ Item {
 
     Keys.onUpPressed: ideal.opacity += 0.5
     Keys.onDownPressed: ideal.opacity -= 0.5
-    Keys.onLeftPressed: {
-        debugRect.x = debugRect.y = debugRect.width = debugRect.height = 0;
-    }
 
     Keys.onPressed: {
         if (event.modifiers & Qt.ControlModifier) {
-            mainMouse.cursorShape = Qt.CrossCursor;
+            mainMouse.cursorShape = Qt.CrossCursor;            
+            //console.log(">>>>>>>>>>>>> event.key", event.key);
             switch (event.key) {
+            //
+            case 65:
+                //Change Z
+                if (ideal.z === 2) {
+                    componentLoader.z = 2;
+                    ideal.z = 1;
+                } else {
+                    componentLoader.z = 1;
+                    ideal.z = 2;
+                }
+                break;
             //"Ctrl" + "-"
             case 45:
                 //Clear All
-                debugRect.width = 0;
-                debugRect.height = 0;
-                debugInfo.text = "";
-                ideal.source = "";
+                debugRect.width = debugRect.height = 0;
+                debugInfo.text = ideal.source = "";
                 mScale = 1;
                 break;
             //"Ctrl" + "P"
@@ -105,10 +113,8 @@ Item {
             //"Ctrl" + "Q"
             case 81:
                 // clear debug Rectangle
-                debugRect.width = 0;
-                debugRect.height = 0;  
+                debugRect.width = debugRect.height = 0;
                 debugInfo.text = "";
-                ideal.source = ""
                 corner.visible = false;
                 break;
             //"Ctrl" + "W"
@@ -136,10 +142,12 @@ Item {
     }
     Keys.onReleased: {
         mainMouse.cursorShape = Qt.ArrowCursor;
-    }
+    }    
 
     Loader{
         id: componentLoader
+        z:1
+
         MouseArea {
             anchors.fill: parent
             drag.target: parent
@@ -151,9 +159,13 @@ Item {
         }
     }
 
-     AnimatedImage {
+
+    AnimatedImage {
         id: ideal
+        z: 2
+
         opacity: 0.5
+        playing: false
 
         onSourceChanged: {
             ideal.width = undefined;
@@ -165,10 +177,16 @@ Item {
         MouseArea {
             anchors.fill: parent
             drag.target: parent
+
+            onClicked: {
+                ideal.playing = ideal.playing ? false : true;
+            }
         }
 
         transform: Scale { xScale: mScale;  yScale: mScale}
     }
+
+
     QtObject {
         id: d
         property real x_: 0
@@ -344,6 +362,8 @@ Item {
 
     MouseArea {
         id: mainMouse
+        z: 3
+
         anchors.fill: parent
         propagateComposedEvents: true
         hoverEnabled: true
@@ -426,6 +446,8 @@ Item {
     }
     Rectangle {
         id: debugRect
+        z: 4
+
         border.color: Qt.lighter(color)
         border.width: 1
         color: 'red'
@@ -434,6 +456,8 @@ Item {
     }
     Rectangle {
         id: corner
+        z: 5
+
         color: 'transparent'
         border.color: 'white'
         border.width: 1
@@ -463,8 +487,11 @@ Item {
         transform: Scale { xScale: mScale;  yScale: mScale}
 
     }
-    Text {
+
+    Text {            
         id: debugInfo
+        z: 6
+
         color: 'black'
         styleColor: "#90ffffff"
         style: Text.Outline
@@ -472,11 +499,15 @@ Item {
 
     Text {
         id: scale
+        z: 6
+
         color: 'black'
         styleColor: "#90ffffff"
         style: Text.Outline
+
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+
         text: "scale: " + mScale.toFixed(1);
     }
 }

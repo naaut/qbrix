@@ -7,7 +7,8 @@ SOURCES += main.cpp \
     fileio.cpp \
     componentcachemanager.cpp \
     QMLHighlighter.cpp \
-    SyntaxHighlighter.cpp
+    SyntaxHighlighter.cpp \
+    watcher.cpp
 
 RESOURCES += qml.qrc
 
@@ -21,5 +22,6 @@ HEADERS += \
     fileio.h \
     componentcachemanager.h \
     QMLHighlighter.h \
-    SyntaxHighlighter.h
+    SyntaxHighlighter.h \
+    watcher.h
 

@@ -5,16 +5,19 @@ import CustomClasses 1.0
 ScrollView {
     id: scrollView
 
-   anchors.fill: parent
+    anchors.fill: parent
 
     property string fileUrl: ""
 
     signal dataChanged(var text);
 
+    function reloadText() {
+        edit.prevText2 = edit.prevText = dataFileIO.load(fileUrl);
+        edit.text = edit.prevText;
+    }
 
     onFileUrlChanged: {
-       edit.prevText = dataFileIO.load(fileUrl);
-       edit.text = edit.prevText;
+        reloadText();
     }
 
     MouseArea {
@@ -35,7 +38,7 @@ ScrollView {
 
         Timer {
             id: timer
-            interval: 400
+            interval: 2000
             onTriggered:  {
                 scrollView.dataChanged(edit.text);
             }
@@ -43,9 +46,9 @@ ScrollView {
 
         onTextChanged: {
             if(edit.prevText !== edit.text) {
-                edit.prevText = edit.text
-                timer.stop()
-                timer.start()
+                edit.prevText = edit.text;
+                timer.stop();
+                timer.start();
             }
         }
 
@@ -53,8 +56,17 @@ ScrollView {
             syntaxHighlighter.setHighlighter(edit);
         }
 
-        FileIO{
+        FileIO {
             id: dataFileIO
+        }
+
+        Watcher {
+            id: textWatcher
+            fileName: fileUrl
+
+            onFileChanged: {
+                    console.log("onFileChanged textWatcher")
+                }
         }
 
         SyntaxHighlighter {
