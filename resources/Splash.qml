@@ -19,7 +19,9 @@ Rectangle {
         }
     }
 
-    Component.onCompleted: {anim.start()}
+    Component.onCompleted: {
+           //anim.start()
+     }
 
     Rectangle {
         id: mainRound 
@@ -157,6 +159,9 @@ Rectangle {
         }
     }
 }
+
+
+
 
 
 

@@ -12,7 +12,7 @@ ScrollView {
     signal dataChanged(var text);
 
     function reloadText() {
-        edit.prevText2 = edit.prevText = dataFileIO.load(fileUrl);
+        edit.prevText = dataFileIO.load(fileUrl);
         edit.text = edit.prevText;
     }
 
@@ -60,14 +60,14 @@ ScrollView {
             id: dataFileIO
         }
 
-        Watcher {
-            id: textWatcher
-            fileName: fileUrl
+//        Watcher {
+//            id: textWatcher
+//            fileName: fileUrl
 
-            onFileChanged: {
-                    console.log("onFileChanged textWatcher")
-                }
-        }
+//            onFileChanged: {
+//                    console.log("onFileChanged textWatcher")
+//                }
+//        }
 
         SyntaxHighlighter {
             id: syntaxHighlighter

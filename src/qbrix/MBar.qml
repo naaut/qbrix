@@ -28,39 +28,39 @@ MenuBar {
         }
     }
 
-    Menu {
-        title: "Options"
+//    Menu {
+//        title: "Options"
 
-        MenuItem {
-            text: "Clear Debug Rect"
-            shortcut: "Ctrl+Q"
-            onTriggered: {
+//        MenuItem {
+//            text: "Clear Debug Rect"
+//            shortcut: "Ctrl+Q"
+//            onTriggered: {
 
-            }
-        }
+//            }
+//        }
 
-        MenuItem {
-            text: "Clear All"
-            shortcut: "Ctrl+W"
-            onTriggered: {
+//        MenuItem {
+//            text: "Clear All"
+//            shortcut: "Ctrl+W"
+//            onTriggered: {
 
-            }
-        }
+//            }
+//        }
 
-        MenuItem {
-            text: "Something1"
-            shortcut: "Crtl+E"
-            onTriggered: {
+//        MenuItem {
+//            text: "Something1"
+//            shortcut: "Crtl+E"
+//            onTriggered: {
 
-            }
-        }
+//            }
+//        }
 
-        MenuItem {
-            text: "Something2"
-            shortcut: "Crtl+R"
-            onTriggered: {
+//        MenuItem {
+//            text: "Something2"
+//            shortcut: "Crtl+R"
+//            onTriggered: {
 
-            }
-        }
-    }
+//            }
+//        }
+//    }
 }
