@@ -12,22 +12,22 @@ Rectangle {
         anchors.fill: parent
 
         onClicked: {
-            anim.start();        
+            anim.start();
         }
         onDoubleClicked: {
-            anim.stop(); 
+            anim.stop();
         }
     }
 
     Component.onCompleted: {
-           //anim.start()
+           anim.start()
      }
 
     Rectangle {
-        id: mainRound 
+        id: mainRound
         width: 224
         height: 224
-        radius: width/2       
+        radius: width/2
         opacity: 1
         color: "#afca0a"
         anchors.centerIn: parent
@@ -159,67 +159,5 @@ Rectangle {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

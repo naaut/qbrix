@@ -37,6 +37,7 @@ public slots:
 
     void setFileName(const QString&);
     void setFolderName(const QString&);
+    void rmLastFileName();
 
 private:
 

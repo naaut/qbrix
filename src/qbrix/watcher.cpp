@@ -28,3 +28,9 @@ void Watcher::setFolderName(const QString &)
 {
 
 }
+
+void Watcher::rmLastFileName()
+{
+    QUrl url_(m_fileName);
+    removePath(url_.toLocalFile());
+}

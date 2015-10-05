@@ -3,25 +3,19 @@ import QtQuick 2.4
 /*!
  \brief Помощник верстальщика
     ctrl + mousePress    рисовать измеряющий квадратик
-    cntr + A             Сменить Z ideal и component
-    ctrl + P             изменить режим измерения квадратиком (пиксели/проценты)
-    ctrp + Q             удалить измеряющий квадратик
-    ctrl + W             установить зум в 1
-    ctrl + E             удалить картинку
-    ctrl + R             установить зум в 1, отцентрировать квадрат, компонент и картинку
-    ctrl + "-"           сбросить зум, удалить картинку
-    ctrl + wheel         зум
-    ctrl + upArrow       переключиться на дизайн
-    ctrl + downArrow     переключиться на верстку
-
     квадратик можно передвигать и растягивать (изменять размеры)
  */
 
 Item {
     id: i
 
-    property var rootAppWindow : parent;
-    property real mScale: 1.0;
+    property alias idealImage: ideal.source
+    property alias idealOpacity: ideal.opacity
+    property alias componentLoader: componentLoader
+
+    property var rootAppWindow: parent
+    property real mScale: 1.0
+    property bool ctrl: false
     property var modes: ({
         PX: 0,
         PP: 1
@@ -66,83 +60,65 @@ Item {
         }
     }
 
-    property alias idealImage: ideal.source
-    property alias componentLoader: componentLoader
-    property bool ctrl: false
-    Component.onCompleted: {
-        forceActiveFocus();
-    }
-
-    Keys.onUpPressed: ideal.opacity += 0.5
-    Keys.onDownPressed: ideal.opacity -= 0.5
-
-    Keys.onPressed: {
-        if (event.modifiers & Qt.ControlModifier) {
-            mainMouse.cursorShape = Qt.CrossCursor;            
-            //console.log(">>>>>>>>>>>>> event.key", event.key);
-            switch (event.key) {
-            //
-            case 65:
-                //Change Z
-                if (ideal.z === 2) {
-                    componentLoader.z = 2;
-                    ideal.z = 1;
-                } else {
-                    componentLoader.z = 1;
-                    ideal.z = 2;
-                }
-                break;
-            //"Ctrl" + "-"
-            case 45:
-                //Clear All
-                debugRect.width = debugRect.height = 0;
-                debugInfo.text = ideal.source = "";
-                mScale = 1;
-                break;
-            //"Ctrl" + "P"
-            case 80:
-                // Set mode to %
-                mode = next(modes, mode);
-                d.updateDebugInfo();
-                break;
-            //"Ctrl" + "E"
-            case 69:
-                // Clear ideal
-                ideal.source = "";
-                break;
-            //"Ctrl" + "Q"
-            case 81:
-                // clear debug Rectangle
-                debugRect.width = debugRect.height = 0;
-                debugInfo.text = "";
-                corner.visible = false;
-                break;
-            //"Ctrl" + "W"
-            case 87:
-                //reset Scale
-                mScale = 1;
-                corner.visible = false;
-                break;
-            //"Ctrl" + "R"
-            case 82:
-                // Reset Scale and set at center
-                mScale = 1;
-                componentLoader.x = i.width/2 - componentLoader.width/2;
-                componentLoader.y = i.height/2 - componentLoader.height/2;
-                ideal.x = i.width/2 - ideal.width/2;
-                ideal.y = i.height/2 - ideal.height/2;
-                debugRect.x = i.width/2 - debugRect.width/2;
-                debugRect.y = i.height/2 - debugRect.height/2;
-                corner.visible = false;
-                corner.updateSize();
-                updateElement(debugRect.x , debugRect.y - debugInfo.height, debugInfo);
-                break;
-            }
+    /*!
+     \brief Меняет местами Z у componentLoader'а и картинки ideal
+     */
+    function changeZ() {
+        if (ideal.z === 2) {
+            componentLoader.z = 2;
+            ideal.z = 1;
+        } else {
+            componentLoader.z = 1;
+            ideal.z = 2;
         }
     }
-    Keys.onReleased: {
-        mainMouse.cursorShape = Qt.ArrowCursor;
-    }    
+
+    /*!
+     \brief Меняет формат отображения пикселей на % и обратно
+     */
+    function changeMode() {
+        mode = next(modes, mode);
+        d.updateDebugInfo();
+    }
+
+    /*!
+     \brief Удаляет debugRect
+     */
+    function clearDebugRect() {
+        debugRect.width = debugRect.height = 0;
+        debugInfo.text = "";
+        corner.visible = false;
+    }
+
+    /*!
+     \brief Удаляет картинку ideal
+     */
+    function clearIdeal() {
+        ideal.source = "";
+    }
+
+    /*!
+     \brief Сброс масштаба на 1:1
+     */
+    function resetScale() {
+        mScale = 1;
+        corner.visible = false;
+    }
+
+    /*!
+     \brief  Устанавливаем componentLoader и картинку ideal по центру
+    */
+    function setAtCenter() {
+        componentLoader.x = i.width/2 - componentLoader.width/2;
+        componentLoader.y = i.height/2 - componentLoader.height/2;
+        ideal.x = i.width/2 - ideal.width/2;
+        ideal.y = i.height/2 - ideal.height/2;
+       // debugRect.x = i.width/2 - debugRect.width/2;
+       // debugRect.y = i.height/2 - debugRect.height/2;
+       // corner.visible = false;
+       // corner.updateSize();
+       // updateElement(debugRect.x , debugRect.y - debugInfo.height, debugInfo);
+    }
 
     Loader{
         id: componentLoader
@@ -159,7 +135,6 @@ Item {
         }
     }
 
-
     AnimatedImage {
         id: ideal
         z: 2
@@ -168,8 +143,6 @@ Item {
         playing: false
 
         onSourceChanged: {
-            ideal.width = undefined;
-            ideal.height = undefined;
             ideal.x = i.width/2 - ideal.width/2;
             ideal.y = i.height/2 - ideal.height/2;
         }
@@ -182,10 +155,8 @@ Item {
                 ideal.playing = ideal.playing ? false : true;
             }
         }
-
         transform: Scale { xScale: mScale;  yScale: mScale}
     }
-
 
     QtObject {
         id: d
@@ -210,7 +181,7 @@ Item {
             return Math.abs(y1 - y2);
         }
         function updateDebugInfo() {
-            debugInfo.text = 'w:'+getSize(d.w)+' h:'+getSize(d.h)+' (' + nameMode() + ')';
+            debugInfo.text = 'w:' + getSize(d.w) +' h:' + getSize(d.h) + ' (' + nameMode() + ')';
         }
     }
 
@@ -368,10 +339,6 @@ Item {
         propagateComposedEvents: true
         hoverEnabled: true
 
-        onContainsMouseChanged: {
-            if (containsMouse && !activeFocus) forceActiveFocus();
-        }        
-
         onPressed: {
             corner.visible = false;
             if (insideObject(mouseX, mouseY, debugRect)) {
@@ -381,9 +348,10 @@ Item {
                 }
                 return startDragging(mouseX, mouseY, debugRect);
             }
-            if (!(mouse.modifiers & Qt.ControlModifier)) {
+            if (!(mouse.modifiers & Qt.ControlModifier)) {                
                 return mouse.accepted = false;
             }
+            mainMouse.cursorShape = Qt.CrossCursor;
             d.isDrawing = true;
             d.x_ = mouseX;
             d.y_ = mouseY;
@@ -405,13 +373,12 @@ Item {
 
             // рисование элемента
             if (d.isDrawing) {
-                d.w = d.getWidth(d.x_, mouseX);
-                d.h = d.getHeight(d.y_, mouseY);
+                d.w = d.getWidth(d.x_, mouseX)/mScale ;
+                d.h = d.getHeight(d.y_, mouseY)/mScale ;
                 debugRect.x = Math.min(mouseX, d.x_);
                 debugRect.y = Math.min(mouseY, d.y_);
-                debugRect.width = d.w/mScale || 1;
-                debugRect.height = d.h/mScale || 1;
-
+                debugRect.width = d.w || 1;
+                debugRect.height = d.h || 1;
                 debugInfo.x = debugRect.x;
                 debugInfo.y = debugRect.y - debugInfo.height;
                 d.updateDebugInfo();
@@ -424,6 +391,7 @@ Item {
             }
         }
         onReleased: {
+            mainMouse.cursorShape = Qt.ArrowCursor;
             if (d.resizingCorner > -1) return stopResizing();
             if (d.draggingElement) return stopDragging();
             if (d.isDrawing) return stopDrawing();
@@ -485,7 +453,6 @@ Item {
             corner.height = (debugRect.height / 4);
         }
         transform: Scale { xScale: mScale;  yScale: mScale}
-
     }
 
     Text {            

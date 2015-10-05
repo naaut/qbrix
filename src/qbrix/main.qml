@@ -27,10 +27,11 @@ ApplicationWindow {
     }
 
     Watcher {
-        id: externalWatcher
+        id: watcher
 
         onFileChanged: {
-            console.log("File changed", fileUrl)
+            //console.log("File changed", fileUrl);
+            if (codeEditor) codeEditor.reloadText();
             reload();
         }
     }
@@ -44,7 +45,7 @@ ApplicationWindow {
         componentsFolderModel.folder = folderUrl;        
     }
 
-    menuBar: MBar{
+    menuBar: MBar {
 
     }
 
@@ -74,6 +75,7 @@ ApplicationWindow {
             codeEditor = component.createObject(editArea);
             codeEditor.fileUrl = fileUrl;
             codeEditor.dataChanged.connect(function (text){
+                watcher.rmLastFileName();
                 fileio.save(text, fileUrl);
                 reload(text);               
             });
@@ -91,8 +93,8 @@ ApplicationWindow {
         cacheManager.clear();
         makeup.componentLoader.setSource(source, Helper.tryParseJSON(text));
 
-        if (dataFileName) externalWatcher.fileName =  dataFileName;
-        else externalWatcher.fileName =  fileUrl;
+        if (dataFileName) watcher.fileName =  dataFileName;
+        else watcher.fileName =  fileUrl;
     }
 
     // Load selected component
@@ -107,13 +109,13 @@ ApplicationWindow {
         if (testData) {
             makeup.componentLoader.setSource(main.fileUrl, testData);
             loadCode(dataFileUrl);
-            externalWatcher.fileName = dataFileUrl;
+            watcher.fileName = dataFileUrl;
         }
         else  {
             testDataTable.selection.clear();
             makeup.componentLoader.setSource(main.fileUrl, {});
             loadCode(fileUrl);
-            externalWatcher.fileName =  fileUrl;
+            watcher.fileName =  fileUrl;
         }
     }
 

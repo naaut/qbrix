@@ -38,7 +38,7 @@ ScrollView {
 
         Timer {
             id: timer
-            interval: 2000
+            interval: 500
             onTriggered:  {
                 scrollView.dataChanged(edit.text);
             }
@@ -59,15 +59,6 @@ ScrollView {
         FileIO {
             id: dataFileIO
         }
-
-//        Watcher {
-//            id: textWatcher
-//            fileName: fileUrl
-
-//            onFileChanged: {
-//                    console.log("onFileChanged textWatcher")
-//                }
-//        }
 
         SyntaxHighlighter {
             id: syntaxHighlighter
